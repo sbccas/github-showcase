@@ -127,29 +127,32 @@
     }
 
     function displayRepos(repoList) {
-      repoContainer.innerHTML = "";
-      repoList.forEach(repo => {
-        const card = document.createElement("div");
-        card.className = "repo-card";
+  repoContainer.innerHTML = "";
+  repoList.forEach(repo => {
+    const card = document.createElement("div");
+    card.className = "repo-card";
 
-        const imageUrl = fallbackImage;
+    // Try GitHub OpenGraph social preview
+    const imageUrl = `https://opengraph.githubassets.com/1/${username}/${repo.name}`;
 
-        card.innerHTML = `
-          <img class="repo-image" src="${imageUrl}" alt="${repo.name}">
-          <div class="repo-content">
-            <div class="repo-title">${repo.name}</div>
-            <div class="repo-desc">${repo.description || "No description available."}</div>
-            <div class="repo-stats">
-              <span>⭐ ${repo.stargazers_count}</span>
-              <span>🍴 ${repo.forks_count}</span>
-            </div>
-            <a class="btn" href="${repo.html_url}" target="_blank">View on GitHub</a>
-          </div>
-        `;
+    card.innerHTML = `
+      <img class="repo-image" src="${imageUrl}" 
+           alt="${repo.name}" 
+           onerror="this.onerror=null;this.src='${fallbackImage}';">
+      <div class="repo-content">
+        <div class="repo-title">${repo.name}</div>
+        <div class="repo-desc">${repo.description || "No description available."}</div>
+        <div class="repo-stats">
+          <span>⭐ ${repo.stargazers_count}</span>
+          <span>🍴 ${repo.forks_count}</span>
+        </div>
+        <a class="btn" href="${repo.html_url}" target="_blank">View on GitHub</a>
+      </div>
+    `;
 
-        repoContainer.appendChild(card);
-      });
-    }
+    repoContainer.appendChild(card);
+  });
+}
 
     function filterAndSortRepos() {
       let filtered = repos.filter(repo => repo.name.toLowerCase().includes(searchBox.value.toLowerCase()));
