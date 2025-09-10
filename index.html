@@ -112,66 +112,87 @@
     <!-- Repo Cards will load here -->
   </div>
 
-  <script>
-    const username = "sbccas"; // Replace with your org/user name
-    const repoContainer = document.getElementById("repo-container");
-    const searchBox = document.getElementById("searchBox");
-    const sortSelect = document.getElementById("sortSelect");
-    const fallbackImage = "https://via.placeholder.com/600x300.png?text=Amroli+College+Project";
-    let repos = [];
+<script>
+  const username = "YOUR_GITHUB_USERNAME"; // Replace with your org/user name
+  const repoContainer = document.getElementById("repo-container");
+  const searchBox = document.getElementById("searchBox");
+  const sortSelect = document.getElementById("sortSelect");
+  const fallbackImage = "https://via.placeholder.com/600x300.png?text=Amroli+College+Project";
+  let repos = [];
 
-    async function loadRepos() {
-      const res = await fetch(`https://api.github.com/users/${username}/repos?per_page=100`);
-      repos = await res.json();
-      displayRepos(repos);
+  async function loadRepos() {
+    const res = await fetch(`https://api.github.com/users/${username}/repos?per_page=100`);
+    repos = await res.json();
+    displayRepos(repos);
+  }
+
+  async function getReadmeImage(repoName) {
+    try {
+      const res = await fetch(`https://api.github.com/repos/${username}/${repoName}/readme`, {
+        headers: { Accept: "application/vnd.github.v3.raw" }
+      });
+      if (!res.ok) return null;
+      const text = await res.text();
+
+      // Find first image in README using regex ![alt](url)
+      const match = text.match(/!\[.*?\]\((.*?)\)/);
+      return match ? match[1] : null;
+    } catch (err) {
+      return null;
     }
+  }
 
-    function displayRepos(repoList) {
-  repoContainer.innerHTML = "";
-  repoList.forEach(repo => {
-    const card = document.createElement("div");
-    card.className = "repo-card";
+  async function displayRepos(repoList) {
+    repoContainer.innerHTML = "";
+    for (const repo of repoList) {
+      const card = document.createElement("div");
+      card.className = "repo-card";
 
-    // Try GitHub OpenGraph social preview
-    const imageUrl = `https://opengraph.githubassets.com/1/${username}/${repo.name}`;
+      let imageUrl = await getReadmeImage(repo.name);
 
-    card.innerHTML = `
-      <img class="repo-image" src="${imageUrl}" 
-           alt="${repo.name}" 
-           onerror="this.onerror=null;this.src='${fallbackImage}';">
-      <div class="repo-content">
-        <div class="repo-title">${repo.name}</div>
-        <div class="repo-desc">${repo.description || "No description available."}</div>
-        <div class="repo-stats">
-          <span>⭐ ${repo.stargazers_count}</span>
-          <span>🍴 ${repo.forks_count}</span>
-        </div>
-        <a class="btn" href="${repo.html_url}" target="_blank">View on GitHub</a>
-      </div>
-    `;
-
-    repoContainer.appendChild(card);
-  });
-}
-
-    function filterAndSortRepos() {
-      let filtered = repos.filter(repo => repo.name.toLowerCase().includes(searchBox.value.toLowerCase()));
-
-      if (sortSelect.value === "stars") {
-        filtered.sort((a, b) => b.stargazers_count - a.stargazers_count);
-      } else if (sortSelect.value === "forks") {
-        filtered.sort((a, b) => b.forks_count - a.forks_count);
-      } else {
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
+      if (!imageUrl) {
+        // If README image not found, try GitHub OpenGraph preview
+        imageUrl = `https://opengraph.githubassets.com/1/${username}/${repo.name}`;
       }
 
-      displayRepos(filtered);
+      card.innerHTML = `
+        <img class="repo-image" src="${imageUrl}" 
+             alt="${repo.name}" 
+             onerror="this.onerror=null;this.src='${fallbackImage}';">
+        <div class="repo-content">
+          <div class="repo-title">${repo.name}</div>
+          <div class="repo-desc">${repo.description || "No description available."}</div>
+          <div class="repo-stats">
+            <span>⭐ ${repo.stargazers_count}</span>
+            <span>🍴 ${repo.forks_count}</span>
+          </div>
+          <a class="btn" href="${repo.html_url}" target="_blank">View on GitHub</a>
+        </div>
+      `;
+
+      repoContainer.appendChild(card);
+    }
+  }
+
+  function filterAndSortRepos() {
+    let filtered = repos.filter(repo => repo.name.toLowerCase().includes(searchBox.value.toLowerCase()));
+
+    if (sortSelect.value === "stars") {
+      filtered.sort((a, b) => b.stargazers_count - a.stargazers_count);
+    } else if (sortSelect.value === "forks") {
+      filtered.sort((a, b) => b.forks_count - a.forks_count);
+    } else {
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    searchBox.addEventListener("input", filterAndSortRepos);
-    sortSelect.addEventListener("change", filterAndSortRepos);
+    displayRepos(filtered);
+  }
 
-    loadRepos();
-  </script>
+  searchBox.addEventListener("input", filterAndSortRepos);
+  sortSelect.addEventListener("change", filterAndSortRepos);
+
+  loadRepos();
+</script>
+
 </body>
 </html>
